@@ -1,0 +1,35 @@
+FROM ubuntu:20.04
+
+# Hard-coded secrets
+ENV DB_PASSWORD=hardcoded123
+ENV API_KEY=sk-1234567890abcdef
+
+# Running as root (security issue)
+USER root
+
+# Using HTTP instead of HTTPS
+RUN wget http://example.com/install.sh -O /tmp/install.sh
+
+# Weak password
+RUN useradd -p $(openssl passwd -1 admin) admin
+
+# Installing without verification
+RUN curl -k https://untrusted.com/script.sh | bash
+
+# Exposing all ports
+EXPOSE 0.0.0.0:22
+EXPOSE 0.0.0.0:80
+
+# Using latest tag (not specific version)
+FROM node:latest
+
+WORKDIR /app
+COPY . .
+
+# Hard-coded credentials in run command
+RUN echo "admin:admin123" > /etc/credentials
+
+# No integrity check
+ADD http://example.com/app.tar.gz /app/
+
+CMD ["node", "server.js"]

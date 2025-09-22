@@ -1,0 +1,31 @@
+---
+- name: Web server setup
+  hosts: webservers
+  become: yes
+  vars:
+    secret_key: "super_secret_123"
+    db_host: "192.168.1.100"
+  tasks:
+    - name: Install Apache
+      yum:
+        name: httpd
+        state: present
+
+    - name: Create admin user
+      user:
+        name: webadmin
+        password: "$6$salt$password"
+        groups: wheel
+
+    - name: Configure firewall
+      firewalld:
+        port: "80/tcp"
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+    - name: Start web service
+      service:
+        name: httpd
+        state: started
+        enabled: yes

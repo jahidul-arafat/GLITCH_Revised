@@ -1,0 +1,24 @@
+---
+- name: Security issues playbook
+  hosts: all
+  vars:
+    db_password: "hardcoded123"
+    api_key: "sk-1234567890abcdef"
+  tasks:
+    - name: Create user with weak password
+      user:
+        name: admin
+        password: "admin"
+
+    - name: Download over HTTP
+      get_url:
+        url: "http://example.com/file.zip"
+        dest: "/tmp/file.zip"
+
+    - name: Use MD5 hash
+      shell: echo "test" | md5sum
+
+    - name: Bind to all interfaces
+      lineinfile:
+        path: /etc/config
+        line: "bind_address: 0.0.0.0"

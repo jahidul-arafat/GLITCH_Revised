@@ -1,0 +1,44 @@
+name: Security Issues Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DB_PASSWORD: hardcoded123
+  API_SECRET: sk-1234567890abcdef
+
+jobs:
+  security-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup with hard-coded credentials
+        run: |
+          echo "admin:admin123" > credentials.txt
+          export SECRET_KEY="super_secret_key"
+
+      - name: Download over HTTP
+        run: |
+          wget http://example.com/script.sh
+          curl -k https://untrusted.com/file.zip
+
+      - name: Use weak crypto
+        run: |
+          echo "password" | md5sum
+          openssl md5 <<< "secret"
+
+      - name: Bind to all interfaces
+        run: |
+          echo "0.0.0.0:8080" > server.conf
+
+      - name: Very long step name with complex conditions that should trigger long statement detection in GLITCH analysis framework
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.commits[0].message, 'deploy') && github.actor != 'dependabot[bot]'
+        run: |
+          if [ "$GITHUB_REF" == "refs/heads/main" ] && [ "$GITHUB_EVENT_NAME" == "push" ] && [ "$GITHUB_ACTOR" != "dependabot[bot]" ] && [ "${#GITHUB_SHA}" -eq 40 ]; then
+            echo "This is a very long command that should trigger the long statement smell detection mechanism"
+          fi

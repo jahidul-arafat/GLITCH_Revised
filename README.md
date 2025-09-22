@@ -45,7 +45,13 @@ docker pull jahidularafat/glitch:latest
 docker run --rm jahidularafat/glitch:latest --help
 
 # Analyze IaC scripts
-docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech ansible --csv /workspace
+# Test all technologies
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech ansible --csv /workspace/test-ansible
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech puppet --csv /workspace/test-puppet  
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech terraform --csv /workspace/test-terraform
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech chef --csv /workspace/test-chef
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech docker --csv /workspace/test-docker
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech github-actions --csv /workspace/test-github-actions
 ```
 
 **Important Notes:**

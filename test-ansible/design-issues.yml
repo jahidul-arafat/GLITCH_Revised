@@ -1,0 +1,26 @@
+---
+- name: Design issues playbook with very long name that exceeds reasonable limits and should trigger long resource smell detection in GLITCH
+  hosts: all
+  tasks:
+    - name: Very long task with complex expression that should trigger long statement detection
+      shell: |
+        if [ "{{ ansible_os_family }}" == "RedHat" ] && [ "{{ ansible_distribution_major_version }}" -gt "7" ] && [ "{{ some_very_long_variable_name_that_makes_this_complex }}" == "true" ] && [ "{{ another_long_variable }}" != "" ]; then
+          echo "This is a very long shell command that spans multiple lines and should trigger the long statement smell in GLITCH analysis"
+          cat /etc/passwd | grep root | awk '{print $1}' | head -5 | tail -3 | sort | uniq
+        fi
+      when: ansible_os_family == "RedHat"
+
+    - name: Duplicate task
+      yum:
+        name: httpd
+        state: present
+
+    - name: Duplicate task
+      yum:
+        name: httpd
+        state: present
+
+    - name: Misaligned task
+  yum:
+    name: nginx
+    state: present

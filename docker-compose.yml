@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Main GLITCH analysis service
+  glitch:
+    image: jahidularafat/glitch:latest
+    container_name: glitch-analyzer
+    volumes:
+      # Mount your IaC scripts directory
+      - ./iac-scripts:/workspace
+      # Mount output directory for results
+      - ./results:/results
+      # Optional: Mount custom config
+      - ./configs:/custom-configs:ro
+    working_dir: /workspace
+    entrypoint: ["glitch"]
+    # Default: analyze all files in workspace
+    command: ["--help"]
+
+  # Service for interactive use
+  glitch-interactive:
+    image: jahidularafat/glitch:latest
+    container_name: glitch-interactive
+    volumes:
+      - ./iac-scripts:/workspace
+      - ./results:/results
+      - ./configs:/custom-configs:ro
+    working_dir: /workspace
+    entrypoint: ["/bin/bash"]
+    stdin_open: true
+    tty: true
+
+  # Ansible-specific analysis
+  glitch-ansible:
+    image: jahidularafat/glitch:latest
+    container_name: glitch-ansible
+    volumes:
+      - ./iac-scripts:/workspace
+      - ./results:/results
+    working_dir: /workspace
+    entrypoint: ["glitch"]
+    command: ["--tech", "ansible", "--csv", "/workspace"]
+
+  # Puppet-specific analysis
+  glitch-puppet:
+    image: jahidularafat/glitch:latest
+    container_name: glitch-puppet
+    volumes:
+      - ./iac-scripts:/workspace
+      - ./results:/results
+    working_dir: /workspace
+    entrypoint: ["glitch"]
+    command: ["--tech", "puppet", "--csv", "/workspace"]
+
+  # Terraform-specific analysis
+  glitch-terraform:
+    image: jahidularafat/glitch:latest
+    container_name: glitch-terraform
+    volumes:
+      - ./iac-scripts:/workspace
+      - ./results:/results
+    working_dir: /workspace
+    entrypoint: ["glitch"]
+    command: ["--tech", "terraform", "--csv", "/workspace"]
+
+  # Chef-specific analysis (limited support)
+  glitch-chef:
+    image: jahidularafat/glitch:latest
+    container_name: glitch-chef
+    volumes:
+      - ./iac-scripts:/workspace
+      - ./results:/results
+    working_dir: /workspace
+    entrypoint: ["glitch"]
+    command: ["--tech", "chef", "--csv", "/workspace"]

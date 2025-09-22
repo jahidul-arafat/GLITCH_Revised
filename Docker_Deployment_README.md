@@ -1,251 +1,316 @@
-# GLITCH Docker - Infrastructure as Code Smell Detection
+# GLITCH-Revised
+##### Fixed by Jahidul Arafat; ex-Oracle (Senior Solution and Cloud Architect, Oracle Singapore); Presidential and Woltosz (Dual fellowship) graduate research Fellow, AU, CSSE; 
 
-![GLITCH Logo](https://github.com/sr-lab/GLITCH/raw/main/logo.png)
+[![DOI](https://zenodo.org/badge/453066827.svg)](https://zenodo.org/badge/latestdoi/453066827)
+[![License: GPL-3.0](https://badgen.net/github/license/sr-lab/GLITCH)](https://www.gnu.org/licenses/gpl-3.0)
+[![Python Version](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/downloads/)
+[![Last release](https://badgen.net/github/release/sr-lab/GLITCH/)](https://github.com/sr-lab/GLITCH/releases)
+[![Docker Image](https://img.shields.io/badge/docker-jahidularafat/glitch-blue)](https://hub.docker.com/r/jahidularafat/glitch)
 
-**GLITCH** is a technology-agnostic framework for automated detection of Infrastructure as Code (IaC) smells. This Docker image provides an easy way to run GLITCH without local installation complexities.
+![alt text](https://github.com/sr-lab/GLITCH/blob/main/logo.png?raw=true)
 
-## 🚀 Quick Start
+GLITCH is a technology-agnostic framework that enables automated detection of IaC smells. GLITCH allows polyglot smell detection by transforming IaC scripts into an intermediate representation, on which different smell detectors can be defined. GLITCH currently supports the detection of nine different security smells [1, 2] and nine design & implementation smells [3] in scripts written in Puppet, Ansible, Chef, or Terraform.
 
-### Pull and Run
+## Recent Fixes and Updates
+
+### Python 3.12 Compatibility Fixed
+- **Issue**: Fixed pandas/numpy binary incompatibility that caused `ValueError: numpy.dtype size changed` on Python 3.12
+- **Solution**: Updated pandas from 1.5.3 to ^2.1.0 and added numpy ^1.26.0 constraint in pyproject.toml
+- **Status**: GLITCH now fully supports Python 3.10, 3.11, and 3.12
+
+### Docker Containerization Added
+- **New Feature**: Complete Docker support with pre-built images available on Docker Hub
+- **Benefits**: No local installation complexities, consistent environment across platforms
+- **Availability**: `docker pull jahidularafat/glitch:latest`
+
+### Technology Support Matrix
+| Technology | Local Install | Docker Support | Status |
+|------------|---------------|----------------|---------|
+| **Ansible** | ✅ Full | ✅ Full | Fully tested |
+| **Puppet** | ✅ Full | ✅ Full | Fully tested |
+| **Terraform** | ✅ Full | ✅ Full | Fully tested |
+| **Chef** | ⚠️ Requires Ruby | ⚠️ Limited | Ruby dependency issues |
+
+## Installation Options
+
+### Option 1: Docker (Recommended)
+
+**Quick Start:**
 ```bash
-# Pull the image
+# Pull and run
 docker pull jahidularafat/glitch:latest
 
 # Show help
 docker run --rm jahidularafat/glitch:latest --help
 
-# Analyze IaC scripts in current directory
+# Analyze IaC scripts
 docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech ansible --csv /workspace
 ```
 
-### Using Docker Compose
+**Docker Compose Setup:**
 ```bash
 # Create project structure
 mkdir -p iac-scripts results
+cd iac-scripts && cp /path/to/your/iac/files/* . && cd ..
 
-# Copy your IaC files to iac-scripts/
-cp your-playbooks/* iac-scripts/
-
+# Create docker-compose.yml (see Docker section below)
 # Run analysis
-docker-compose run --rm glitch --tech ansible --csv /workspace
-
-# Interactive mode
-docker-compose run --rm glitch-interactive
+docker-compose run --rm glitch-ansible
 ```
 
-## 📋 Supported Technologies
+### Option 2: Local Installation
 
-| Technology | Status | Command |
-|------------|--------|---------|
-| **Ansible** | ✅ Full Support | `--tech ansible` |
-| **Puppet** | ✅ Full Support | `--tech puppet` |
-| **Terraform** | ✅ Full Support | `--tech terraform` |
-| **Chef** | ⚠️ Limited Support | `--tech chef` |
+**Prerequisites:**
+- Python 3.10+ (3.12 supported)
+- For Chef analysis: Ruby with Ripper library
 
-*Note: Chef analysis may have limitations due to Ruby Ripper dependencies*
-
-## 🔍 Analysis Examples
-
-### Ansible Playbooks
+**Install:**
 ```bash
-docker run --rm -v $(pwd)/ansible-playbooks:/workspace \
-  jahidularafat/glitch:latest \
-  --tech ansible --csv --config /app/configs/ansible.yml /workspace
+python -m pip install -e .
 ```
 
-### Puppet Manifests
+**For Chef support:**
 ```bash
-docker run --rm -v $(pwd)/puppet-manifests:/workspace \
-  jahidularafat/glitch:latest \
-  --tech puppet --csv --config /app/configs/puppet.yml /workspace
+# Install Ruby and Ripper
+sudo apt-get install ruby ruby-dev  # Ubuntu/Debian
+brew install ruby                   # macOS
+gem install ripper
 ```
 
-### Terraform Files
+### Option 3: Poetry Installation
+
 ```bash
-docker run --rm -v $(pwd)/terraform-files:/workspace \
-  jahidularafat/glitch:latest \
-  --tech terraform --csv --config /app/configs/terraform.yml /workspace
+poetry install
 ```
 
-### With Module Structure Analysis
+**Warning**: VSCode extension doesn't work with Poetry installation due to PATH requirements.
+
+## Usage
+
+### Docker Usage (Recommended)
+
+**Basic Commands:**
 ```bash
-docker run --rm -v $(pwd)/iac-project:/workspace \
-  jahidularafat/glitch:latest \
-  --tech terraform --csv --module --config /app/configs/terraform.yml /workspace
+# Analyze Ansible playbooks
+docker run --rm -v $(pwd)/playbooks:/workspace \
+  jahidularafat/glitch:latest --tech ansible --csv /workspace
+
+# Analyze Puppet manifests
+docker run --rm -v $(pwd)/manifests:/workspace \
+  jahidularafat/glitch:latest --tech puppet --csv /workspace
+
+# Analyze Terraform files
+docker run --rm -v $(pwd)/terraform:/workspace \
+  jahidularafat/glitch:latest --tech terraform --csv /workspace
+
+# Interactive mode for debugging
+docker run --rm -it -v $(pwd):/workspace jahidularafat/glitch:latest /bin/bash
 ```
 
-## 💾 Save Results
-
-### Save to Host Directory
+**Save Results:**
 ```bash
-mkdir -p results
-docker run --rm \
-  -v $(pwd)/iac-scripts:/workspace \
-  -v $(pwd)/results:/results \
-  jahidularafat/glitch:latest \
-  --tech ansible --csv /workspace > results/analysis-$(date +%Y%m%d).csv
+# Save analysis to host file
+docker run --rm -v $(pwd):/workspace \
+  jahidularafat/glitch:latest --tech ansible --csv /workspace > analysis.csv
+
+# With timestamp
+docker run --rm -v $(pwd):/workspace \
+  jahidularafat/glitch:latest --tech puppet --csv /workspace > "analysis-$(date +%Y%m%d).csv"
 ```
 
-### Pipe Results
-```bash
-# Direct CSV output
-docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest \
-  --tech puppet --csv /workspace > puppet-analysis.csv
-
-# Pretty table output
-docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest \
-  --tech ansible /workspace
+**Docker Compose Configuration:**
+```yaml
+version: '3.8'
+services:
+  glitch-ansible:
+    image: jahidularafat/glitch:latest
+    volumes:
+      - ./iac-scripts:/workspace
+      - ./results:/results
+    command: ["--tech", "ansible", "--csv", "/workspace"]
+  
+  glitch-puppet:
+    image: jahidularafat/glitch:latest
+    volumes:
+      - ./iac-scripts:/workspace
+      - ./results:/results
+    command: ["--tech", "puppet", "--csv", "/workspace"]
 ```
 
-## 🔧 Configuration
+### Local Usage
 
-### Custom Configuration Files
+**Basic Commands:**
 ```bash
-# Use custom config
+# Show all options
+glitch --help
+
+# Analyze files with CSV output
+glitch --tech (chef|puppet|ansible|terraform) --csv --config PATH_TO_CONFIG PATH_TO_FILE_OR_FOLDER
+
+# Include module structure analysis
+glitch --tech ansible --module --csv /path/to/playbooks
+
+# Use specific configuration
+glitch --tech puppet --config configs/puppet.yml --csv /path/to/manifests
+```
+
+**Poetry Usage:**
+```bash
+poetry run glitch --help
+# or
+poetry shell
+glitch --help
+```
+
+## Configuration
+
+### Built-in Configurations
+- `configs/ansible.yml` - Ansible-specific rules
+- `configs/puppet.yml` - Puppet-specific rules
+- `configs/chef.yml` - Chef-specific rules
+- `configs/terraform.yml` - Terraform-specific rules
+
+### Custom Configurations
+Create custom configs with the same structure as existing ones in the `configs` folder.
+
+**Docker with custom config:**
+```bash
 docker run --rm \
   -v $(pwd)/my-config.yml:/config/custom.yml \
   -v $(pwd)/iac-scripts:/workspace \
   jahidularafat/glitch:latest \
-  --tech ansible --csv --config /config/custom.yml /workspace
+  --tech ansible --config /config/custom.yml --csv /workspace
 ```
 
-### Built-in Configurations
-The image includes default configurations:
-- `/app/configs/ansible.yml`
-- `/app/configs/puppet.yml`
-- `/app/configs/terraform.yml`
-- `/app/configs/chef.yml`
+## Examples
 
-## 🛠️ Building from Source
-
-### Prerequisites
-- Docker installed
-- Docker Hub account (for pushing)
-
-### Build Commands
+### Analyze Multiple Technologies
 ```bash
-# Clone the repository
-git clone https://github.com/sr-lab/GLITCH.git
-cd GLITCH
+# Local
+glitch --tech ansible --csv ./playbooks > ansible-results.csv
+glitch --tech puppet --csv ./manifests > puppet-results.csv
+glitch --tech terraform --csv ./tf-files > terraform-results.csv
 
-# Build the image
-docker build -t jahidularafat/glitch:latest .
-
-# Test the build
-docker run --rm jahidularafat/glitch:latest --help
-
-# Push to Docker Hub
-docker push jahidularafat/glitch:latest
+# Docker
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech ansible --csv /workspace/playbooks > ansible.csv
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech puppet --csv /workspace/manifests > puppet.csv
+docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest --tech terraform --csv /workspace/terraform > terraform.csv
 ```
 
-### Automated Build Script
+### Batch Processing Script
 ```bash
-chmod +x build-and-push.sh
-./build-and-push.sh
+#!/bin/bash
+technologies=("ansible" "puppet" "terraform")
+for tech in "${technologies[@]}"; do
+  docker run --rm -v $(pwd):/workspace \
+    jahidularafat/glitch:latest --tech $tech --csv /workspace > "${tech}-$(date +%Y%m%d).csv"
+done
 ```
 
-## 🐞 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-**Permission Denied**
+**Docker Permission Issues:**
 ```bash
-# Fix permissions
+# Fix file permissions
 chmod -R 755 iac-scripts/
-chmod -R 755 results/
+sudo chown -R $USER:$USER results/
 ```
 
-**No Files Found**
+**Python 3.12 ImportError (Legacy Issue):**
+If you encounter numpy/pandas import errors, update your pyproject.toml:
+```toml
+pandas = "^2.1.0"
+numpy = "^1.26.0"
+```
+
+**Ruby/Chef Issues:**
+For local Chef analysis, ensure Ruby and Ripper are installed:
 ```bash
-# Check mounted directory
-docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest ls -la /workspace
+ruby -e "require 'ripper'; puts 'OK'"
 ```
 
-**Configuration Issues**
+**Docker Build Issues:**
 ```bash
-# Use verbose output
-docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest \
-  --tech ansible --csv /workspace --verbose
+# Clean Docker cache and rebuild
+docker system prune -f
+docker build --no-cache -t glitch-local .
 ```
 
-### Interactive Debugging
-```bash
-# Run shell in container
-docker run --rm -it -v $(pwd):/workspace jahidularafat/glitch:latest /bin/bash
+## Paper and Academic Usage
 
-# Check GLITCH installation
-docker run --rm jahidularafat/glitch:latest python -c "import glitch; print('OK')"
-```
+"[GLITCH: Automated Polyglot Security Smell Detection in Infrastructure as Code](https://arxiv.org/abs/2205.14371)" is the main paper that describes the implementation of security smells in GLITCH. It also presents a large-scale empirical study  that analyzes security smells on three large datasets containing 196,755 IaC scripts and 12,281,251 LOC.
 
-## 📊 Detection Capabilities
+**If you use GLITCH or any of its datasets, please cite:**
 
-### Security Smells (9 types)
-- Hard-coded secrets
-- Invalid IP address binding
-- HTTP without TLS
-- Weak cryptography algorithms
-- Missing security updates
-- Admin by default
-- Empty passwords
-- Use of weak encryption protocols
-- Suspicious comments
+- Nuno Saavedra and João F. Ferreira. 2022. [GLITCH: Automated Polyglot Security Smell Detection in Infrastructure as Code](https://arxiv.org/abs/2205.14371). In 37th IEEE/ACM International Conference on Automated Software Engineering (ASE '22), October 10–14, 2022, Rochester, MI, USA. ACM, New York NY, USA, 12 pages. https://doi.org/10.1145/3551349.3556945
 
-### Design & Implementation Smells (9 types)
-- Long resource
-- Complex expression
-- Improper alignment
-- Long statement
-- Missing dependency
-- Multifaceted abstraction
-- Unnecessary abstraction
-- Duplicate entity
-- Misplaced attribute
-
-## 📈 Output Formats
-
-### CSV Output
-```bash
-# Generate CSV report
-docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest \
-  --tech ansible --csv /workspace > analysis.csv
-```
-
-### Console Table
-```bash
-# Pretty formatted table
-docker run --rm -v $(pwd):/workspace jahidularafat/glitch:latest \
-  --tech puppet /workspace
-```
-
-## 🔗 Links
-
-- **Original Repository**: https://github.com/sr-lab/GLITCH
-- **Docker Hub**: https://hub.docker.com/r/jahidularafat/glitch
-- **Documentation**: https://github.com/sr-lab/GLITCH/tree/main/docs
-- **Issues**: https://github.com/sr-lab/GLITCH/issues
-
-## 📄 License
-
-This project is licensed under the GPL-3.0 License - see the [LICENSE](https://github.com/sr-lab/GLITCH/blob/main/LICENSE) file for details.
-
-## 📚 Citation
-
-If you use GLITCH in your research, please cite:
-
-```bibtex
-@inproceedings{saavedraferreira22glitch,
+ ```bibtex
+ @inproceedings{saavedraferreira22glitch,
   title={{GLITCH}: Automated Polyglot Security Smell Detection in Infrastructure as Code},
   author={Saavedra, Nuno and Ferreira, Jo{\~a}o F},
   booktitle={Proceedings of the 37th IEEE/ACM International Conference on Automated Software Engineering},
   year={2022}
 }
+ ```
+
+- 	Nuno Saavedra, João Gonçalves, Miguel Henriques, João F. Ferreira, Alexandra Mendes. 2023. [Polyglot Code Smell Detection for Infrastructure as Code with GLITCH](https://arxiv.org/pdf/2308.09458.pdf). In 38th IEEE/ACM International Conference on Automated Software Engineering (ASE '23), September 11-15, 2023, Luxembourg.
+     https://doi.org/10.1109/ASE56229.2023.00162
+
+```bibtex
+@inproceedings{saavedra23glitchdemo,
+  author={Saavedra, Nuno and Gonçalves, João and Henriques, Miguel and Ferreira, João F. and Mendes, Alexandra},
+  booktitle={2023 38th IEEE/ACM International Conference on Automated Software Engineering (ASE)}, 
+  title={Polyglot Code Smell Detection for Infrastructure as Code with GLITCH}, 
+  year={2023},
+  pages={2042-2045},
+  doi={10.1109/ASE56229.2023.00162}
+}
 ```
 
-## 🤝 Contributing
+## Tests
 
-Issues and pull requests are welcome at the [original repository](https://github.com/sr-lab/GLITCH).
+To run the tests for GLITCH go to the folder ```glitch``` and run:
+```bash
+python -m unittest discover tests
+```
 
----
-**Maintained by**: jahidularafat  
-**Version**: 1.0.1  
-**Last Updated**: September 2025
+**Docker testing:**
+```bash
+docker run --rm jahidularafat/glitch:latest python -m unittest discover glitch/tests
+```
+
+## Documentation
+
+More information can be found in [GLITCH's documentation](https://github.com/sr-lab/GLITCH/wiki).
+
+## VSCode extension
+
+GLITCH has a Visual Studio Code extension which is available [here](https://github.com/sr-lab/GLITCH/tree/main/vscode-extension/glitch).
+
+**Note**: The extension requires GLITCH to be installed locally (not via Poetry or Docker).
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+For Docker-related contributions, test with:
+```bash
+docker build -t glitch-test .
+docker run --rm glitch-test --help
+```
+
+## License
+
+[GPL-3.0](https://choosealicense.com/licenses/gpl-3.0/)
+
+## References
+
+<sub>[1] Rahman, A., Parnin, C., & Williams, L. (2019, May). The seven sins: Security smells in infrastructure as code scripts. In 2019 IEEE/ACM 41st International Conference on Software Engineering (ICSE) (pp. 164-175). IEEE.</sub>
+
+<sub>[2] Rahman, A., Rahman, M. R., Parnin, C., & Williams, L. (2021). Security smells in ansible and chef scripts: A replication study. ACM Transactions on Software Engineering and Methodology (TOSEM), 30(1), 1-31.</sub>
+
+<sub>[3] Schwarz, J., Steffens, A., & Lichter, H. (2018, September). Code smells in infrastructure as code. In 2018 11th International Conference on the Quality of Information and Communications Technology (QUATIC) (pp. 220-228). IEEE.</sub>

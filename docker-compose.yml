@@ -1,6 +1,14 @@
 version: '3.8'
 
 services:
+  # glitch shell
+  glitch-shell:
+    image: jahidularafat/glitch:latest
+    volumes:
+      - .:/workspace
+    entrypoint: /bin/bash
+    stdin_open: true
+    tty: true
   # Main GLITCH analysis service
   glitch:
     image: jahidularafat/glitch:latest
